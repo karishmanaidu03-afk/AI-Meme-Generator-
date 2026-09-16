@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemeLab — AI Meme Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: { DEFAULT: '#A855F7', hover: '#9333EA', soft: '#F3E8FF' },
+            pink: { DEFAULT: '#EC4899' },
+            ink: { DEFAULT: '#1A1D23', muted: '#6B7280' },
+            line: '#E5E7EB',
+            bg: '#FDFBFF',
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-bg text-ink font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ===== HEADER ===== -->
+  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-line">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand to-pink flex items-center justify-center text-white text-lg">🎨</div>
+        <div>
+          <h1 class="text-base font-bold leading-tight bg-gradient-to-r from-brand to-pink bg-clip-text text-transparent">MemeLab</h1>
+          <p class="text-[10px] text-ink-muted leading-tight">AI meme factory</p>
+        </div>
+        <span id="statusBadge" class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">no key</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="settingsBtn" class="text-xs font-medium px-3 py-1.5 rounded-full border border-line hover:bg-gray-50 transition">⚙️ API Key</button>
+        <button id="historyBtn" class="text-xs font-medium px-3 py-1.5 rounded-full bg-gradient-to-r from-brand to-pink text-white hover:opacity-90 transition">History</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <main class="flex-1 w-full">
+    <div class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+
+            <!-- Chat column -->
+      <div class="flex flex-col">
+        <div id="chatArea" class="space-y-4 pb-64"></div>
+      </div>
+      
+      <!-- Templates sidebar -->
+      <aside class="hidden lg:block">
+        <div class="sticky top-24">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-pink flex items-center justify-center text-white text-sm">🔥</div>
+            <div>
+              <h2 class="text-sm font-bold leading-tight">Trending</h2>
+              <p class="text-[10px] text-ink-muted leading-tight">Fresh from the lab</p>
+            </div>
+          </div>
+          <div id="templateGrid" class="grid grid-cols-2 gap-3"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ===== INPUT BAR ===== -->
+  <div class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-bg via-bg to-transparent pt-6 pb-4 z-10">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto">
+        <!-- Suggestion chips -->
+        <div id="suggestions" class="flex flex-wrap gap-2 mb-3 justify-center">
+          <button class="chip">Monday morning office struggle</button>
+          <button class="chip">When the WiFi goes down</button>
+          <button class="chip">Exam result be like</button>
+          <button class="chip">Best friend roasting me</button>
+          <button class="chip">When mom calls during gaming</button>
+          <button class="chip">Salary finishes in 3 days</button>
+        </div>
+
+        <form id="chatForm" class="flex items-center gap-2 bg-white border border-line rounded-full shadow-lg p-2 pl-5">
+          <textarea id="messageInput" rows="1" placeholder="Describe a vibe, situation, or chaos…" class="flex-1 resize-none bg-transparent outline-none text-sm py-2 max-h-32"></textarea>
+          <button id="sendBtn" type="submit" class="shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-brand to-pink text-white font-bold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+        <p class="text-[10px] text-ink-muted text-center mt-2">Powered by Groq · Runs entirely in your browser</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History drawer -->
+  <div id="historyOverlay" class="fixed inset-0 bg-black/30 hidden z-30"></div>
+  <aside id="historyDrawer" class="fixed top-0 right-0 h-full w-80 max-w-full bg-white border-l border-line shadow-xl translate-x-full transition-transform duration-300 z-40 flex flex-col">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-line">
+      <h2 class="font-semibold text-sm">History</h2>
+      <button id="closeHistory" class="text-gray-500 hover:text-black text-2xl leading-none">×</button>
+    </div>
+    <div id="historyList" class="flex-1 overflow-y-auto p-3 space-y-2">
+      <p class="text-xs text-gray-500 text-center py-8">No memes yet.</p>
+    </div>
+  </aside>
+
+  <!-- API Key modal -->
+  <div id="settingsOverlay" class="fixed inset-0 bg-black/40 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+      <h2 class="text-lg font-bold mb-2">Groq API Key</h2>
+      <p class="text-sm text-gray-500 mb-4">
+        Get a free key at
+        <a href="https://console.groq.com/keys" target="_blank" class="text-brand hover:underline">console.groq.com/keys</a>.
+        Stored only in your browser.
+      </p>
+      <input id="apiKeyInput" type="password" placeholder="gsk_..." class="w-full border border-line rounded-lg px-3 py-2 text-sm mb-4 outline-none focus:border-brand" />
+      <div class="flex gap-2 justify-end">
+        <button id="cancelSettings" class="text-sm px-4 py-2 rounded-lg border border-line hover:bg-gray-50">Cancel</button>
+        <button id="saveSettings" class="text-sm px-4 py-2 rounded-lg bg-gradient-to-r from-brand to-pink text-white">Save</button>
+      </div>
+      <button id="clearKey" class="text-xs text-red-500 hover:underline mt-3">Clear saved key</button>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-40 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-4 py-2 rounded-lg opacity-0 pointer-events-none transition-opacity z-50"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
